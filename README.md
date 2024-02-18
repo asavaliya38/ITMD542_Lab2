@@ -6,7 +6,7 @@
 
 ### Class/Assignment No: ITMD-542/Lab 2
 
-### Git repository URL:
+### Git repository URL: https://github.com/asavaliya38/ITMD542_Lab2.git
 
 # Contact Database Application
 
@@ -72,3 +72,4 @@ This is a Node.js Express application for managing contacts. It allows users to 
 - **data**: This directory stores data files. In this case, `contacts.json` is used to store contact information.
 - **package.json**: Configuration file that lists project dependencies and scripts.
 - **README.md**: Documentation file providing information about the project structure, usage, and other details.
+
