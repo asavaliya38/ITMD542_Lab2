@@ -1,10 +1,10 @@
 # Personal Details
 
-### Name:
+### Name: Abhishek Savaliya
 
-### Email:
+### Email: asavaliya@hawk.iit.edu
 
-### Class/Assignment No:
+### Class/Assignment No: ITMD-542/Lab 2
 
 ### Git repository URL:
 
