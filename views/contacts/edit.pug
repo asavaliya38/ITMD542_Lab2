@@ -1,0 +1,25 @@
+extends layout
+
+block content
+  .container.mt-5
+    .row
+      .col-sm-8.offset-sm-2
+        .d-flex.justify-content-between.align-items-center.mb-3
+          h2.mb-0= pageTitle
+          a.btn.btn-primary(href=`/contacts/${contact.id}`)
+            i.fa.fa-arrow-left.mr-2
+            | Back to Contact Details
+        form(action=`/contacts/${contact.id}?_method=PUT`, method="POST")
+          .form-group
+            label(for="firstName") First Name:
+            input#firstName.form-control(type="text", name="firstName", value=contact.firstName, required)
+          .form-group
+            label(for="lastName") Last Name:
+            input#lastName.form-control(type="text", name="lastName", value=contact.lastName, required)
+          .form-group
+            label(for="email") Email Address:
+            input#email.form-control(type="email", name="email", value=contact.email)
+          .form-group
+            label(for="notes") Notes:
+            textarea#notes.form-control(name="notes", rows="3")= contact.notes
+          button.btn.btn-primary(type="submit") Save

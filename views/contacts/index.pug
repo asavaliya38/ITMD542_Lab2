@@ -1,0 +1,36 @@
+extends layout
+
+block content
+  .container-fluid.h-100.mt-5
+    .row.align-items-center.justify-content-center.h-100
+      .col-sm-9
+        .d-flex.justify-content-between.align-items-center.mb-3
+          h2.mb-0 Contact Details
+          a.btn.btn-primary(href="/contacts/new")
+            i.fa.fa-plus.mr-2
+            | Create New Contact
+        table.table.table-striped
+          thead
+            tr
+              th First Name
+              th Last Name
+              th Email Address
+              th Actions
+          tbody
+            each contact in contacts
+              tr
+                td #{contact.firstName}
+                td #{contact.lastName}
+                td #{contact.email}
+                td
+                  .btn-group
+                    div.px-1
+                    a.btn.btn-primary(href=`/contacts/${contact.id}`) 
+                      i.fa.fa-eye
+                    div.px-1
+                    a.btn.btn-secondary(href=`/contacts/${contact.id}/edit`) 
+                      i.fa.fa-edit
+                    div.px-1
+                    form(action=`/contacts/${contact.id}?_method=DELETE`, method="POST")
+                      button.btn.btn-danger(type="submit")
+                        i.fa.fa-trash.mr-2
