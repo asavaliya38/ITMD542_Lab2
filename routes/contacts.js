@@ -1,78 +1,92 @@
 const express = require("express");
 const router = express.Router();
 const path = require("path");
-const fs = require("fs");
+const sqlite3 = require("sqlite3").verbose();
 const moment = require("moment");
 
 const DATE_FORMAT = "Do MMMM YYYY hh:mm A";
 
-const readContactsFromFile = () => {
-  const filePath = path.join(__dirname, "..", "data", "contacts.json");
-  try {
-    const data = fs.readFileSync(filePath, "utf8");
-    return JSON.parse(data);
-  } catch (error) {
-    console.error("Error reading contacts file:", error);
-    return [];
-  }
+// Connect to SQLite database
+const db = new sqlite3.Database("./data/contacts.db");
+
+// Function to retrieve all contacts from the database
+const getAllContacts = (callback) => {
+  const query = "SELECT * FROM contacts";
+  db.all(query, (err, rows) => {
+    if (err) {
+      console.error("Error retrieving contacts:", err);
+      callback([]);
+    } else {
+      callback(rows);
+    }
+  });
 };
 
-const writeContactsToFile = (contacts) => {
-  const filePath = path.join(__dirname, "..", "data", "contacts.json");
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(contacts, null, 2));
-  } catch (error) {
-    console.error("Error writing contacts file:", error);
-  }
+// Function to retrieve a single contact by ID from the database
+const getContactById = (id, callback) => {
+  const query = "SELECT * FROM contacts WHERE id = ?";
+  db.get(query, [id], (err, row) => {
+    if (err) {
+      console.error("Error retrieving contact by ID:", err);
+      callback(null);
+    } else {
+      callback(row);
+    }
+  });
 };
 
+// Route to display all contacts
 router.get("/", function (req, res, next) {
-  const contacts = readContactsFromFile();
-  res.render("contacts/index", { contacts: contacts });
+  getAllContacts((contacts) => {
+    res.render("contacts/index", { contacts });
+  });
 });
 
+// Route to display the form for creating a new contact
 router.get("/new", function (req, res, next) {
   res.render("contacts/new", { pageTitle: "Create New Contact" });
 });
 
+// Route to display the form for editing a contact
 router.get("/:id/edit", function (req, res, next) {
   const contactId = req.params.id;
 
-  let contacts = readContactsFromFile();
-
-  const contact = contacts.find((contact) => contact.id === contactId);
-
-  if (contact) {
-    res.render("contacts/edit", {
-      contact: contact,
-      pageTitle: "Edit Contact",
-    });
-  } else {
-    res.status(404).send("Contact not found");
-  }
+  getContactById(contactId, (contact) => {
+    if (contact) {
+      res.render("contacts/edit", {
+        contact,
+        pageTitle: "Edit Contact",
+      });
+    } else {
+      res.status(404).send("Contact not found");
+    }
+  });
 });
 
+// Route to display a single contact
 router.get("/:id", function (req, res, next) {
   const contactId = req.params.id;
-  const contacts = readContactsFromFile();
-  const contact = contacts.find((contact) => contact.id === contactId);
-  const updatedContact = {
-    Id: contact.id,
-    "First Name": contact.firstName,
-    "Last Name": contact.lastName,
-    Email: contact.email || "--",
-    Notes: contact.notes || "--",
-    "Created/Updated At:": contact.createdAt
-      ? moment(contact.createdAt).format(DATE_FORMAT)
-      : moment(contact.lastEdited).format(DATE_FORMAT),
-  };
-  if (contact) {
-    res.render("contacts/show", { contact: updatedContact });
-  } else {
-    res.status(404).send("Contact not found");
-  }
+
+  getContactById(contactId, (contact) => {
+    if (contact) {
+      const updatedContact = {
+        Id: contact.id,
+        "First Name": contact.firstName,
+        "Last Name": contact.lastName,
+        Email: contact.email || "--",
+        Notes: contact.notes || "--",
+        "Created/Updated At:": contact.createdAt
+          ? moment(contact.createdAt).format(DATE_FORMAT)
+          : moment(contact.lastEdited).format(DATE_FORMAT),
+      };
+      res.render("contacts/show", { contact: updatedContact });
+    } else {
+      res.status(404).send("Contact not found");
+    }
+  });
 });
 
+// Route to create a new contact
 router.post("/", function (req, res, next) {
   const { firstName, lastName, email, notes } = req.body;
 
@@ -80,65 +94,57 @@ router.post("/", function (req, res, next) {
     return res.status(400).send("First Name and Last Name are required");
   }
 
-  const newContact = {
-    id: Math.random().toString(36).substr(2, 9),
-    firstName: firstName.trim(),
-    lastName: lastName.trim(),
-    email: email.trim(),
-    notes: notes.trim(),
-    createdAt: new Date().toISOString(),
-  };
+  const query =
+    "INSERT INTO contacts (firstName, lastName, email, notes, createdAt) VALUES (?, ?, ?, ?, ?)";
+  const createdAt = new Date().toISOString();
 
-  let contacts = readContactsFromFile();
-
-  contacts.push(newContact);
-
-  writeContactsToFile(contacts);
-
-  res.redirect("/contacts");
+  db.run(query, [firstName, lastName, email, notes, createdAt], function (err) {
+    if (err) {
+      console.error("Error creating contact:", err);
+      res.status(500).send("Internal Server Error");
+    } else {
+      res.redirect("/contacts");
+    }
+  });
 });
 
+// Route to update a contact
 router.put("/:id", function (req, res, next) {
   const contactId = req.params.id;
   const { firstName, lastName, email, notes } = req.body;
 
-  let contacts = readContactsFromFile();
+  const query =
+    "UPDATE contacts SET firstName = ?, lastName = ?, email = ?, notes = ?, lastEdited = ? WHERE id = ?";
+  const lastEdited = new Date().toISOString();
 
-  const index = contacts.findIndex((contact) => contact.id === contactId);
-
-  if (index !== -1) {
-    contacts[index].firstName = firstName;
-    contacts[index].lastName = lastName;
-    contacts[index].email = email;
-    contacts[index].notes = notes;
-    contacts[index].lastEdited = new Date().toISOString(); // Update lastEdited timestamp
-    delete contacts[index].createdAt;
-
-    writeContactsToFile(contacts);
-
-    res.redirect(`/contacts/${contactId}`);
-  } else {
-    res.status(404).send("Contact not found");
-  }
+  db.run(
+    query,
+    [firstName, lastName, email, notes, lastEdited, contactId],
+    function (err) {
+      if (err) {
+        console.error("Error updating contact:", err);
+        res.status(500).send("Internal Server Error");
+      } else {
+        res.redirect(`/contacts/${contactId}`);
+      }
+    }
+  );
 });
 
+// Route to delete a contact
 router.delete("/:id", function (req, res, next) {
   const contactId = req.params.id;
 
-  let contacts = readContactsFromFile();
+  const query = "DELETE FROM contacts WHERE id = ?";
 
-  const index = contacts.findIndex((contact) => contact.id === contactId);
-
-  if (index !== -1) {
-    contacts.splice(index, 1);
-
-    writeContactsToFile(contacts);
-
-    res.redirect("/contacts");
-  } else {
-    res.status(404).send("Contact not found");
-  }
+  db.run(query, [contactId], function (err) {
+    if (err) {
+      console.error("Error deleting contact:", err);
+      res.status(500).send("Internal Server Error");
+    } else {
+      res.redirect("/contacts");
+    }
+  });
 });
 
 module.exports = router;
-

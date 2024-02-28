@@ -9,11 +9,11 @@ block content
           a.btn.btn-primary(href="/contacts")
             i.fa.fa-arrow-left.mr-2
             | Back to Contact List
-            a.btn.btn-secondary(href=`/contacts/${contact.Id}/edit`) 
-              i.fa.fa-edit
-            form(action=`/contacts/${contact.Id}?_method=DELETE`, method="POST")
-              button.btn.btn-danger(type="submit") 
-                i.fa.fa-trash.mr-2
+          a.btn.btn-secondary(href=`/contacts/${contact.Id}/edit`) 
+            i.fa.fa-edit
+          form(action=`/contacts/${contact.Id}?_method=DELETE`, method="POST")
+            button.btn.btn-danger(type="submit") 
+              i.fa.fa-trash.mr-2
         table.table.table-bordered
           tbody
             each key, value in contact

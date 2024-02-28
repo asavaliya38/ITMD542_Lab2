@@ -2,9 +2,13 @@ const express = require("express");
 const path = require("path");
 const bodyParser = require("body-parser");
 const methodOverride = require("method-override");
+const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
+
+// Connect to SQLite database
+const db = new sqlite3.Database('./data/contacts.db');
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -24,4 +28,3 @@ app.use("/contacts", contactsRoutes);
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
-

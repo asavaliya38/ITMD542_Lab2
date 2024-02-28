@@ -19,18 +19,15 @@ block content
           tbody
             each contact in contacts
               tr
-                td #{contact.firstName}
-                td #{contact.lastName}
-                td #{contact.email}
+                td= contact.firstName
+                td= contact.lastName
+                td= contact.email
                 td
                   .btn-group
-                    div.px-1
-                    a.btn.btn-primary(href=`/contacts/${contact.id}`) 
+                    a.btn.btn-primary(href=`/contacts/${contact.id}`)
                       i.fa.fa-eye
-                    div.px-1
-                    a.btn.btn-secondary(href=`/contacts/${contact.id}/edit`) 
+                    a.btn.btn-secondary(href=`/contacts/${contact.id}/edit`)
                       i.fa.fa-edit
-                    div.px-1
                     form(action=`/contacts/${contact.id}?_method=DELETE`, method="POST")
                       button.btn.btn-danger(type="submit")
                         i.fa.fa-trash.mr-2
